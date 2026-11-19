@@ -1,0 +1,628 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHASEMRAHMANI | دفتر کار مجازی من</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f1f6fc;color:#23354d;line-height:1.9}
+header{background:linear-gradient(135deg,#0756a5,#168de0);color:white;text-align:center;padding:35px 15px}
+header h1{margin:0;font-size:27px}
+nav{background:white;padding:12px;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;box-shadow:0 2px 8px #ccd9e8;position:sticky;top:0;z-index:10}
+nav a{text-decoration:none;background:#e8f3ff;color:#0756a5;padding:7px 12px;border-radius:20px;font-size:13px}
+nav a:hover{background:#0756a5;color:white}
+.container{max-width:950px;margin:auto;padding:15px}
+section{background:white;padding:22px;margin:18px 0;border-radius:15px;box-shadow:0 3px 12px #dce6f1}
+h2{color:#0756a5;border-bottom:2px solid #d7eaff;padding-bottom:8px}
+input,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #cbd9e9;border-radius:9px;font-family:Tahoma;font-size:14px}
+textarea{min-height:110px}
+button{background:#0876ce;color:white;border:0;padding:10px 17px;border-radius:9px;cursor:pointer;font-family:Tahoma;margin:5px 0}
+button:hover{background:#0756a5}
+.item{background:#f2f7fd;border-right:4px solid #168de0;border-radius:8px;padding:13px;margin:12px 0;overflow-wrap:anywhere}
+.item img{max-width:100%;height:auto;border-radius:8px}
+.item a{color:#0756a5}
+.small{font-size:12px;color:#718096}
+.editBtn{background:#168b63}
+.deleteBtn{background:#c0392b}
+.cancelBtn{background:#718096}
+footer{background:#0756a5;color:white;text-align:center;padding:22px;margin-top:30px}
+.backup{background:#e8f3ff;padding:15px;border-radius:10px;margin-top:15px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>GHASEMRAHMANI</h1>
+<p>دفتر کار مجازی من</p>
+<p>اندیشه، آموزش، پژوهش و فعالیت‌های دانشجویی</p>
+</header>
+
+<nav>
+<a href="#about">درباره من</a>
+<a href="#articles">مقالات</a>
+<a href="#activities">فعالیت‌های دانشجویی</a>
+<a href="#files">فایل‌ها</a>
+<a href="#gallery">گالری</a>
+</nav>
+
+<div class="container">
+
+<section id="about">
+<h2>درباره من</h2>
+<p>به وب‌سایت شخصی من خوش آمدید. در این فضا نوشته‌ها، مقالات علمی، فعالیت‌های دانشجویی و آثار خود را با شما به اشتراک می‌گذارم.</p>
+</section>
+
+<section id="articles">
+<h2>مقالات و نوشته‌های من</h2>
+
+<input id="articleTitle" placeholder="عنوان مقاله">
+<textarea id="articleText" placeholder="متن مقاله را اینجا بنویسید"></textarea>
+
+<button id="articleSaveBtn" onclick="addArticle()">انتشار مقاله</button>
+<button id="articleCancelBtn" class="cancelBtn" onclick="cancelEdit()" style="display:none">انصراف از ویرایش</button>
+
+<div id="articleList"></div>
+</section>
+
+<section id="activities">
+<h2>فعالیت‌های دانشجویی</h2>
+<input id="activityTitle" placeholder="عنوان فعالیت">
+<textarea id="activityText" placeholder="شرح فعالیت دانشجویی"></textarea>
+<button onclick="addActivity()">ثبت فعالیت</button>
+<div id="activityList"></div>
+</section>
+
+<section id="files">
+<h2>فایل‌ها و اسناد من</h2>
+<p>انتخاب و ذخیره فایل PDF، Word و سایر اسناد</p>
+<input id="fileTitle" placeholder="عنوان فایل">
+<input type="file" id="fileInput">
+<button onclick="addFile()">بارگذاری و ذخیره فایل</button>
+<div id="fileList"></div>
+</section>
+
+<section id="gallery">
+<h2>گالری تصاویر</h2>
+<p>تصاویر و عکس‌های مورد علاقه خود را اضافه کنید.</p>
+<input type="file" id="imageInput" accept="image/*">
+<button onclick="addImage()">ذخیره عکس</button>
+<div id="galleryList"></div>
+</section>
+
+<section>
+<h2>پشتیبان‌گیری از اطلاعات</h2>
+<p>برای نگهداری امن‌تر مقالات، فایل‌ها و عکس‌ها نسخه پشتیبان تهیه کنید.</p>
+
+<div class="backup">
+<button onclick="exportBackup()">دریافت نسخه پشتیبان</button>
+<p class="small">برای بازگرداندن اطلاعات، فایل پشتیبان قبلی را انتخاب کنید.</p>
+<input type="file" id="backupInput" accept=".json,application/json">
+<button onclick="importBackup()">بازیابی اطلاعات</button>
+</div>
+</section>
+
+</div>
+
+<footer>
+<p>GHASEMRAHMANI</p>
+<p>دفتر کار مجازی من | 2026</p>
+</footer>
+
+<script>
+
+const DB_NAME="GHASEMRAHMANI_DB";
+let db;
+let editingArticleId=null;
+let objectUrls=[];
+
+const request=indexedDB.open(DB_NAME,1);
+
+request.onupgradeneeded=function(e){
+db=e.target.result;
+if(!db.objectStoreNames.contains("content")){
+db.createObjectStore("content",{keyPath:"id",autoIncrement:true});
+}
+};
+
+request.onsuccess=function(e){
+db=e.target.result;
+loadAll();
+};
+
+request.onerror=function(){
+alert("خطا در باز کردن فضای ذخیره‌سازی.");
+};
+
+function saveRecord(record,callback){
+if(!db){
+alert("لطفاً چند لحظه صبر کنید.");
+return;
+}
+
+const tx=db.transaction("content","readwrite");
+tx.objectStore("content").add(record);
+
+tx.oncomplete=function(){
+if(callback)callback();
+loadAll();
+alert("اطلاعات با موفقیت ذخیره شد.");
+};
+
+tx.onerror=function(){
+alert("ذخیره اطلاعات انجام نشد.");
+};
+}
+
+function addArticle(){
+
+const title=document.getElementById("articleTitle").value.trim();
+const text=document.getElementById("articleText").value.trim();
+
+if(!title||!text){
+alert("عنوان و متن مقاله را وارد کنید.");
+return;
+}
+
+if(editingArticleId!==null){
+
+const tx=db.transaction("content","readwrite");
+const store=tx.objectStore("content");
+const req=store.get(editingArticleId);
+
+req.onsuccess=function(){
+const record=req.result;
+
+if(!record)return;
+
+record.title=title;
+record.text=text;
+record.date=new Date().toLocaleDateString("fa-IR");
+
+store.put(record);
+};
+
+tx.oncomplete=function(){
+cancelEdit();
+loadAll();
+alert("مقاله با موفقیت ویرایش شد.");
+};
+
+tx.onerror=function(){
+alert("ویرایش مقاله انجام نشد.");
+};
+
+}else{
+
+saveRecord({
+type:"article",
+title:title,
+text:text,
+date:new Date().toLocaleDateString("fa-IR")
+},function(){
+document.getElementById("articleTitle").value="";
+document.getElementById("articleText").value="";
+});
+
+}
+
+}
+
+function editArticle(id){
+
+const tx=db.transaction("content","readonly");
+const req=tx.objectStore("content").get(id);
+
+req.onsuccess=function(){
+
+const record=req.result;
+
+if(!record)return;
+
+editingArticleId=id;
+
+document.getElementById("articleTitle").value=record.title;
+document.getElementById("articleText").value=record.text;
+
+document.getElementById("articleSaveBtn").textContent="ذخیره تغییرات";
+document.getElementById("articleCancelBtn").style.display="inline-block";
+
+document.getElementById("articles").scrollIntoView({behavior:"smooth"});
+
+};
+
+}
+
+function cancelEdit(){
+
+editingArticleId=null;
+
+document.getElementById("articleTitle").value="";
+document.getElementById("articleText").value="";
+
+document.getElementById("articleSaveBtn").textContent="انتشار مقاله";
+document.getElementById("articleCancelBtn").style.display="none";
+
+}
+
+function deleteArticle(id){
+
+if(!confirm("آیا از حذف این مقاله مطمئن هستید؟"))return;
+
+const tx=db.transaction("content","readwrite");
+tx.objectStore("content").delete(id);
+
+tx.oncomplete=function(){
+if(editingArticleId===id)cancelEdit();
+loadAll();
+alert("مقاله حذف شد.");
+};
+
+tx.onerror=function(){
+alert("حذف مقاله انجام نشد.");
+};
+
+}
+
+function addActivity(){
+
+const title=document.getElementById("activityTitle").value.trim();
+const text=document.getElementById("activityText").value.trim();
+
+if(!title||!text){
+alert("عنوان و شرح فعالیت را وارد کنید.");
+return;
+}
+
+saveRecord({
+type:"activity",
+title:title,
+text:text,
+date:new Date().toLocaleDateString("fa-IR")
+},function(){
+document.getElementById("activityTitle").value="";
+document.getElementById("activityText").value="";
+});
+
+}
+
+function addFile(){
+
+const file=document.getElementById("fileInput").files[0];
+const title=document.getElementById("fileTitle").value.trim();
+
+if(!file){
+alert("ابتدا یک فایل انتخاب کنید.");
+return;
+}
+
+saveRecord({
+type:"file",
+title:title||file.name,
+name:file.name,
+mime:file.type,
+blob:file,
+date:new Date().toLocaleDateString("fa-IR")
+},function(){
+document.getElementById("fileTitle").value="";
+document.getElementById("fileInput").value="";
+});
+
+}
+
+function addImage(){
+
+const file=document.getElementById("imageInput").files[0];
+
+if(!file){
+alert("ابتدا یک عکس انتخاب کنید.");
+return;
+}
+
+if(!file.type.startsWith("image/")){
+alert("لطفاً یک فایل تصویری انتخاب کنید.");
+return;
+}
+
+saveRecord({
+type:"image",
+title:file.name,
+name:file.name,
+mime:file.type,
+blob:file,
+date:new Date().toLocaleDateString("fa-IR")
+},function(){
+document.getElementById("imageInput").value="";
+});
+
+}
+
+function loadAll(){
+
+if(!db)return;
+
+objectUrls.forEach(url=>URL.revokeObjectURL(url));
+objectUrls=[];
+
+const tx=db.transaction("content","readonly");
+const req=tx.objectStore("content").getAll();
+
+req.onsuccess=function(){
+
+const records=req.result;
+
+showRecords("article","articleList",records);
+showRecords("activity","activityList",records);
+showRecords("file","fileList",records);
+showRecords("image","galleryList",records);
+
+};
+
+}
+
+function showRecords(type,elementId,records){
+
+const container=document.getElementById(elementId);
+container.innerHTML="";
+
+const filtered=records.filter(r=>r.type===type);
+
+if(filtered.length===0){
+container.innerHTML="<p class='small'>هنوز موردی ثبت نشده است.</p>";
+return;
+}
+
+filtered.forEach(record=>{
+
+const div=document.createElement("div");
+div.className="item";
+
+const title=document.createElement("h3");
+title.textContent=record.title||record.name||"";
+div.appendChild(title);
+
+if(type==="article"||type==="activity"){
+
+const p=document.createElement("p");
+p.textContent=record.text;
+div.appendChild(p);
+
+}
+
+if(type==="article"){
+
+const editBtn=document.createElement("button");
+editBtn.className="editBtn";
+editBtn.textContent="ویرایش مقاله";
+editBtn.onclick=function(){
+editArticle(record.id);
+};
+div.appendChild(editBtn);
+
+const deleteBtn=document.createElement("button");
+deleteBtn.className="deleteBtn";
+deleteBtn.textContent="حذف مقاله";
+deleteBtn.onclick=function(){
+deleteArticle(record.id);
+};
+div.appendChild(deleteBtn);
+
+}
+
+if(type==="file"||type==="image"){
+
+if(record.blob){
+
+const url=URL.createObjectURL(record.blob);
+objectUrls.push(url);
+
+if(type==="file"){
+
+const link=document.createElement("a");
+link.href=url;
+link.download=record.name||"file";
+link.textContent="دریافت و مشاهده فایل";
+div.appendChild(link);
+
+}else{
+
+const img=document.createElement("img");
+img.src=url;
+img.alt=record.title||"تصویر";
+div.appendChild(img);
+
+}
+
+}else{
+
+const p=document.createElement("p");
+p.textContent="اطلاعات فایل در دسترس نیست.";
+div.appendChild(p);
+
+}
+
+}
+
+const date=document.createElement("p");
+date.className="small";
+date.textContent="تاریخ ثبت: "+(record.date||"");
+div.appendChild(date);
+
+container.appendChild(div);
+
+});
+
+}
+
+function blobToDataURL(blob){
+
+return new Promise((resolve,reject)=>{
+
+const reader=new FileReader();
+
+reader.onload=()=>resolve(reader.result);
+reader.onerror=()=>reject(reader.error);
+
+reader.readAsDataURL(blob);
+
+});
+
+}
+
+function dataURLToBlob(dataURL){
+
+const parts=dataURL.split(",");
+const mime=parts[0].match(/:(.*?);/)[1];
+const binary=atob(parts[1]);
+const bytes=new Uint8Array(binary.length);
+
+for(let i=0;i<binary.length;i++){
+bytes[i]=binary.charCodeAt(i);
+}
+
+return new Blob([bytes],{type:mime});
+
+}
+
+function exportBackup(){
+
+if(!db){
+alert("فضای ذخیره‌سازی آماده نیست.");
+return;
+}
+
+const tx=db.transaction("content","readonly");
+const req=tx.objectStore("content").getAll();
+
+req.onsuccess=async function(){
+
+try{
+
+const records=[];
+
+for(const r of req.result){
+
+const item={...r};
+
+if(item.blob){
+item.blobData=await blobToDataURL(item.blob);
+delete item.blob;
+}
+
+records.push(item);
+
+}
+
+const backup={
+app:"GHASEMRAHMANI",
+version:1,
+records:records
+};
+
+const blob=new Blob(
+[JSON.stringify(backup)],
+{type:"application/json"}
+);
+
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+
+a.href=url;
+a.download="GHASEMRAHMANI-backup.json";
+a.click();
+
+setTimeout(()=>URL.revokeObjectURL(url),3000);
+
+alert("نسخه پشتیبان آماده شد.");
+
+}catch(error){
+
+alert("تهیه نسخه پشتیبان با خطا روبه‌رو شد.");
+
+}
+
+};
+
+}
+
+function importBackup(){
+
+const file=document.getElementById("backupInput").files[0];
+
+if(!file){
+alert("ابتدا فایل نسخه پشتیبان را انتخاب کنید.");
+return;
+}
+
+if(!confirm("اطلاعات فعلی سایت با اطلاعات نسخه پشتیبان جایگزین می‌شوند. آیا ادامه می‌دهید؟")){
+return;
+}
+
+const reader=new FileReader();
+
+reader.onload=function(){
+
+try{
+
+const backup=JSON.parse(reader.result);
+
+if(backup.app!=="GHASEMRAHMANI"||!Array.isArray(backup.records)){
+throw new Error("فایل نامعتبر");
+}
+
+const records=backup.records.map(r=>{
+
+const item={...r};
+
+delete item.id;
+
+if(item.blobData){
+item.blob=dataURLToBlob(item.blobData);
+delete item.blobData;
+}
+
+return item;
+
+});
+
+const tx=db.transaction("content","readwrite");
+const store=tx.objectStore("content");
+
+store.clear();
+
+records.forEach(record=>{
+store.add(record);
+});
+
+tx.oncomplete=function(){
+
+cancelEdit();
+loadAll();
+
+document.getElementById("backupInput").value="";
+
+alert("بازیابی اطلاعات با موفقیت انجام شد.");
+
+};
+
+tx.onerror=function(){
+alert("بازیابی اطلاعات انجام نشد.");
+};
+
+}catch(error){
+
+alert("فایل پشتیبان معتبر نیست یا قابل خواندن نیست.");
+
+}
+
+};
+
+reader.readAsText(file);
+
+}
+
+</script>
+</body>
+</html>
